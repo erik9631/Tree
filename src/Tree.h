@@ -1,5 +1,7 @@
 #pragma once
+#include <execution>
 #include <functional>
+#include <future>
 
 #include <vector>
 #include <queue>
@@ -32,6 +34,13 @@ std::unique_ptr<Tree<T>> CreateSubNode(Tree<T>& node, T* value)
     return AddNode(node, value);
 }
 
+
+template <typename T>
+bool IsRoot(Tree<T>& node)
+{
+    return node.root == &node;
+}
+
 template <typename T>
 Tree<T>* AddNode(Tree<T>& node, std::unique_ptr<Tree<T>> nodeToAdd)
 {
@@ -40,32 +49,6 @@ Tree<T>* AddNode(Tree<T>& node, std::unique_ptr<Tree<T>> nodeToAdd)
     nodeRef->parent = &node;
     nodeRef->root = node.root;
     return nodeRef;
-}
-
-
-template <typename T>
-std::unique_ptr<Tree<T>> RemoveNode(Tree<T>& parentNode, Tree<T>& nodeToRemove)
-{
-    for (auto it = parentNode.elementList.begin(); it != parentNode.elementList.end(); it++)
-    {
-        if(it->get() != &nodeToRemove)
-            continue;
-
-        auto removedNode = std::move(*it);
-
-        removedNode->parent = nullptr;
-        removedNode->root = removedNode.get();
-        parentNode.elementList.erase(it);
-        return removedNode;
-    }
-
-    return nullptr;
-}
-
-template <typename T>
-bool IsRoot(Tree<T>& node)
-{
-    return node.root == &node;
 }
 
 template <typename T>
@@ -83,20 +66,7 @@ void Bfs (Tree<T>& tree, std::function<void(Tree<T>&)>& action)
     }
 }
 
-void AsyncBfs (Tree<int>& tree, const std::function<void(Tree<int>&)>& action)
-{
-    std::queue<Tree<int>*> nodeQueue;
-    nodeQueue.push(&tree);
-    while (!nodeQueue.empty())
-    {
-        Tree<int>* currentNode = nodeQueue.front();
-        nodeQueue.pop();
-        action(*currentNode);
-        for (auto& node : currentNode->elementList)
-            nodeQueue.push(node.get());
-    }
-}
-
+// This is a bottom to top traversal
 template <typename T>
 void Dfs (Tree<T>& tree, const std::function<void(Tree<T>&)>& action)
 {
@@ -111,8 +81,50 @@ void Dfs (Tree<T>& tree, const std::function<void(Tree<T>&)>& action)
             nodeStack.pop();
             continue;
         }
-
         nodeStack.push({(*it).get(), it->get()->elementList.begin()});
         ++it;
     }
+}
+
+//This is a top to bottom traversal
+template <typename T>
+void ParallelTraversal (Tree<T>& tree, const std::function<void(Tree<T>&)>& action)
+{
+    std::for_each(std::execution::par, tree.elementList.begin(), tree.elementList.end(), [&action](auto& node)
+    {
+        action(*node);
+        ParallelTraversal(*node, action);
+    });
+}
+
+template <typename T>
+void UpdateRoots(Tree<T>& root)
+{
+    if (!IsRoot(root))
+        throw std::exception("This is not a root node");
+
+    std::function<void(Tree<T>&)> action = [&root](Tree<T>& node)
+    {
+        node.root = &root;
+    };
+    ParallelTraversal(root, action);
+}
+
+template <typename T>
+std::unique_ptr<Tree<T>> RemoveNode(Tree<T>& parentNode, Tree<T>& nodeToRemove)
+{
+    for (auto it = parentNode.elementList.begin(); it != parentNode.elementList.end(); it++)
+    {
+        if(it->get() != &nodeToRemove)
+            continue;
+
+        auto removedNode = std::move(*it);
+
+        removedNode->parent = nullptr;
+        removedNode->root = removedNode.get();
+        parentNode.elementList.erase(it);
+        UpdateRoots(*removedNode);
+        return removedNode;
+    }
+    return nullptr;
 }

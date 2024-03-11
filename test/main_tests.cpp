@@ -2,6 +2,8 @@
 // Created by erik9 on 3/10/2024.
 //
 #include <iostream>
+#include <unordered_set>
+
 #include "catch_amalgamated.hpp"
 #include "Tree.h"
 
@@ -188,4 +190,28 @@ TEST_CASE("DFS traversal test", "[DFS Test]")
         ++it;
     };
     Dfs(*tree1, action);
+}
+
+TEST_CASE("Parallel traversal", "[Parallel Traversal test]")
+{
+    auto tree1 = CreateNode(new int(1));
+    auto tree12 = CreateNode(new int(12));
+    auto tree13 = CreateNode(new int(13));
+    auto tree121 = CreateNode(new int(121));
+    auto tree122 = CreateNode(new int(122));
+    auto tree123 = CreateNode(new int(123));
+
+    auto tree12Ref = AddNode(*tree1, std::move(tree12));
+    AddNode(*tree1, std::move(tree13));
+    AddNode(*tree12Ref, std::move(tree121));
+    AddNode(*tree12Ref, std::move(tree122));
+    AddNode(*tree12Ref, std::move(tree123));
+
+    std::unordered_set<int> keys = {1, 12, 13, 121, 122, 123};
+
+    std::function<void(Tree<int>&)> action = [&keys](Tree<int>& node)
+    {
+        REQUIRE(keys.find(*node.value) != keys.end());
+    };
+    ParallelTraversal(*tree1, action);
 }
