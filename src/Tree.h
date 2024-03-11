@@ -69,13 +69,28 @@ bool IsRoot(Tree<T>& node)
 }
 
 template <typename T>
-void Bfs (Tree<T>& tree, std::function<void(Tree<T>&)> action)
+void Bfs (Tree<T>& tree, std::function<void(Tree<T>&)>& action)
 {
-    std::queue<T*> nodeQueue;
+    std::queue<Tree<T>*> nodeQueue;
     nodeQueue.push(&tree);
     while (!nodeQueue.empty())
     {
-        T* currentNode = nodeQueue.pop();;
+        Tree<T>* currentNode = nodeQueue.front();
+        nodeQueue.pop();
+        action(*currentNode);
+        for (auto& node : currentNode->elementList)
+            nodeQueue.push(node.get());
+    }
+}
+
+void AsyncBfs (Tree<int>& tree, const std::function<void(Tree<int>&)>& action)
+{
+    std::queue<Tree<int>*> nodeQueue;
+    nodeQueue.push(&tree);
+    while (!nodeQueue.empty())
+    {
+        Tree<int>* currentNode = nodeQueue.front();
+        nodeQueue.pop();
         action(*currentNode);
         for (auto& node : currentNode->elementList)
             nodeQueue.push(node.get());
@@ -83,21 +98,21 @@ void Bfs (Tree<T>& tree, std::function<void(Tree<T>&)> action)
 }
 
 template <typename T>
-void Dfs (Tree<T>& tree, std::function<void(Tree<T>&)> action)
+void Dfs (Tree<T>& tree, const std::function<void(Tree<T>&)>& action)
 {
     std::stack<std::tuple<Tree<T>*, std::ranges::iterator_t<std::vector<std::unique_ptr<Tree<T>>>>>> nodeStack;
     nodeStack.push({&tree, tree.elementList.begin()});
-    while(nodeStack.size())
+    while(!nodeStack.empty())
     {
         auto& [nodePtr, it] = nodeStack.top();
         if(it == std::ranges::end(nodePtr->elementList))
         {
+            action(*nodePtr);
             nodeStack.pop();
             continue;
         }
 
-        if(it->get()->elementList.size() != 0)
-            nodeStack.push({it->get(), it->get()->elementList.begin()});
-        it++;
+        nodeStack.push({(*it).get(), it->get()->elementList.begin()});
+        ++it;
     }
 }

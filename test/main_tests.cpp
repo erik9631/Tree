@@ -136,3 +136,56 @@ TEST_CASE("Tree remove check", "[Remove check]")
         REQUIRE(tree123Ref->root == tree12Ref);
     }
 }
+
+TEST_CASE("BFS traveral test", "[BFS Test]")
+{
+    auto tree1 = CreateNode(new int(1));
+    auto tree12 = CreateNode(new int(12));
+    auto tree13 = CreateNode(new int(13));
+    auto tree121 = CreateNode(new int(121));
+    auto tree122 = CreateNode(new int(122));
+    auto tree123 = CreateNode(new int(123));
+
+    auto tree12Ref = AddNode(*tree1, std::move(tree12));
+    AddNode(*tree1, std::move(tree13));
+    AddNode(*tree12Ref, std::move(tree121));
+    AddNode(*tree12Ref, std::move(tree122));
+    AddNode(*tree12Ref, std::move(tree123));
+
+    std::vector<int> values = {1, 12, 13, 121, 122, 123};
+    auto it = values.begin();
+
+    std::function<void(Tree<int>&)> action = [&values, &it](Tree<int>& node) {
+        REQUIRE(*node.value == *it);
+        std::cout << *node.value << std::endl;
+        ++it;
+    };
+    Bfs(*tree1, action);
+
+}
+
+TEST_CASE("DFS traversal test", "[DFS Test]")
+{
+    auto tree1 = CreateNode(new int(1));
+    auto tree12 = CreateNode(new int(12));
+    auto tree13 = CreateNode(new int(13));
+    auto tree121 = CreateNode(new int(121));
+    auto tree122 = CreateNode(new int(122));
+    auto tree123 = CreateNode(new int(123));
+
+    auto tree12Ref = AddNode(*tree1, std::move(tree12));
+    AddNode(*tree1, std::move(tree13));
+    AddNode(*tree12Ref, std::move(tree121));
+    AddNode(*tree12Ref, std::move(tree122));
+    AddNode(*tree12Ref, std::move(tree123));
+
+    std::vector<int> values = {121, 122, 123, 12, 13, 1};
+    auto it = values.begin();
+
+    std::function<void(Tree<int>&)> action = [&values, &it](Tree<int>& node) {
+        REQUIRE(*node.value == *it);
+        std::cout << *node.value << std::endl;
+        ++it;
+    };
+    Dfs(*tree1, action);
+}
