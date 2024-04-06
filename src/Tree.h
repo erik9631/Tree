@@ -1,7 +1,6 @@
 #pragma once
 #include <execution>
 #include <functional>
-#include <future>
 
 #include <vector>
 #include <queue>
@@ -27,11 +26,10 @@ std::unique_ptr<Tree<T>> CreateNode(T* value)
 }
 
 template <typename T>
-std::unique_ptr<Tree<T>> CreateSubNode(Tree<T>& node, T* value)
+Tree<T>* CreateSubNode(Tree<T>& node, T* value)
 {
-    auto node = std::make_unique<Tree<T>>();
-    node->value = value;
-    return AddNode(node, value);
+    auto subNode = CreateNode(value);
+    return AddNode(node, std::move(subNode));
 }
 
 

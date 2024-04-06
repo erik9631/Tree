@@ -215,3 +215,10 @@ TEST_CASE("Parallel traversal", "[Parallel Traversal test]")
     };
     ParallelTraversal(*tree1, action);
 }
+
+TEST_CASE("Create subnode", "[Create subnode test]")
+{
+    auto tree1 = CreateNode(new int(1));
+    int a = 5;
+    CreateSubNode(*tree1, &a);
+}
